@@ -269,13 +269,13 @@
 				INFOPLIST_KEY_CFBundleDisplayName = LiveClock;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				INFOPLIST_KEY_WKApplication = YES;
-				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.example.p3rliveclock;
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.owenwu.p3rliveclock;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 0.4;
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.p3rliveclock.watchkitapp;
+				PRODUCT_BUNDLE_IDENTIFIER = com.owenwu.p3rliveclock.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
@@ -297,13 +297,13 @@
 				INFOPLIST_KEY_CFBundleDisplayName = LiveClock;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				INFOPLIST_KEY_WKApplication = YES;
-				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.example.p3rliveclock;
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.owenwu.p3rliveclock;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 0.4;
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.p3rliveclock.watchkitapp;
+				PRODUCT_BUNDLE_IDENTIFIER = com.owenwu.p3rliveclock.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
@@ -331,7 +331,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 0.4;
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.p3rliveclock;
+				PRODUCT_BUNDLE_IDENTIFIER = com.owenwu.p3rliveclock;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -360,7 +360,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 0.4;
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.p3rliveclock;
+				PRODUCT_BUNDLE_IDENTIFIER = com.owenwu.p3rliveclock;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
