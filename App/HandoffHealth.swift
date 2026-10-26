@@ -22,6 +22,7 @@ enum HandoffHealth {
     private static let logger = Logger(subsystem: "p3r.liveclock", category: "自愈")
     private static let kPendingSince = "handoff.pendingSince"      // 交出静帧、还没交出动画的时刻
     private static let kLastDelivered = "handoff.lastDelivered"    // 最近一次交出动画条目
+    private static let kLowMemoryMode = "handoff.lowMemoryMode"    // 省内存模式（隔帧抽取 40 帧，表盘解码内存减半）
     private static let kEvents = "diag.events"
     private static let lock = NSLock()
 
@@ -29,6 +30,12 @@ enum HandoffHealth {
     static var watchdogDelay: TimeInterval { debugNumber("debug.watchdogSeconds") ?? 8 }
     static var refreshInterval: TimeInterval { debugNumber("debug.refreshSeconds") ?? 30 * 60 }
     static var staleAfter: TimeInterval { debugNumber("debug.staleSeconds") ?? 60 * 60 }
+
+    /// 是否开启省内存模式（开启后隔帧加载 40 帧 / 6 fps，表盘解码内存由 ~70 MB 降至 ~35 MB）
+    static var lowMemoryMode: Bool {
+        get { defaults.bool(forKey: kLowMemoryMode) }
+        set { defaults.set(newValue, forKey: kLowMemoryMode) }
+    }
 
     // MARK: - 诊断日志
 

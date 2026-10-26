@@ -1,6 +1,6 @@
 {
   "animationResampling" : "source-crop-high-quality",
-  "bottomPadding" : 42,
+  "bottomPadding" : 28,
   "clockPresentation" : "right-column-menu-stack",
   "duration" : 6.666666666666667,
   "edgeFill" : "none",
@@ -10,15 +10,16 @@
 
   ],
   "glassRendering" : "none",
-  "pixelHeight" : 600,
-  "pixelWidth" : 416,
-  "posterPixelHeight" : 600,
-  "posterPixelWidth" : 416,
+  "pixelHeight" : 558,
+  "pixelWidth" : 410,
+  "posterPixelHeight" : 558,
+  "posterPixelWidth" : 410,
   "posterScale" : 2,
   "scale" : 2,
   "source" : "fv_movie2.mp4",
   "sourceCropX" : 180,
-  "topPadding" : 10,
-  "visiblePixelHeight" : 496,
-  "visiblePixelWidth" : 416
+  "targetDevice" : "Apple Watch Ultra 2 49mm",
+  "topPadding" : 0,
+  "visiblePixelHeight" : 502,
+  "visiblePixelWidth" : 410
 }

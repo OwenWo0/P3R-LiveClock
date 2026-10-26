@@ -14,22 +14,31 @@ struct ComplicationResearch: App {
     }
 }
 
-/// 首页：设置说明 + 交接状态 + 最近 40 条诊断日志。真机卡住时截图这一页即可定位卡在哪一步。
+/// 首页：设置说明 + 交接状态 + 内存模式切换 + 最近 40 条诊断日志。真机卡住时截图这一页即可定位卡在哪一步。
 struct StatusView: View {
     @State private var events: [String] = []
     @State private var pending: Date?
     @State private var last: Date?
+    @State private var lowMemory = HandoffHealth.lowMemoryMode
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 10) {
                 Text("P3R 原生动态表盘").font(.headline)
-                Text("版本 \(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?")（\(Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "?")）").font(.footnote).foregroundStyle(.secondary)
+                Text("Ultra 2 49mm (410×502) · 版本 \(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?")（\(Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "?")）").font(.footnote).foregroundStyle(.secondary)
                 Text("编辑系统「模块化」表盘，颜色选「多色」。中央：P3R 动画研究；右下：P3R 玻璃时间；其他关闭。").font(.footnote)
                 Divider()
                 Text(pending != nil ? "交接：未完成（自 \(Self.short(pending!))）" : "交接：正常").font(.footnote.bold())
                     .foregroundStyle(pending != nil ? .orange : .green)
                 Text("上次交出动画：\(last.map(Self.short) ?? "无")").font(.footnote)
+                Text("帧率模式：\(lowMemory ? "省内存 40 帧 (6fps · ~35MB)" : "高清 80 帧 (12fps · ~70MB)")").font(.footnote)
+                Button(lowMemory ? "切换为高清 80 帧" : "切换为省内存 40 帧") {
+                    lowMemory.toggle()
+                    HandoffHealth.lowMemoryMode = lowMemory
+                    HandoffHealth.record("切换为\(lowMemory ? "省内存 40 帧" : "高清 80 帧")模式")
+                    HandoffHealth.reloadAll()
+                    refresh()
+                }
                 Button("手动修复（重载表盘数据）") { HandoffHealth.record("手动修复"); HandoffHealth.reloadAll(); refresh() }
                 Divider()
                 Text("最近事件").font(.footnote.bold())
@@ -49,6 +58,7 @@ struct StatusView: View {
         events = HandoffHealth.events
         pending = HandoffHealth.pendingSince
         last = HandoffHealth.lastDelivered
+        lowMemory = HandoffHealth.lowMemoryMode
     }
 
     private static func short(_ d: Date) -> String {
@@ -66,30 +76,39 @@ final class AnimatedComplication: NSObject, CLKComplicationDataSource {
               let data = try? Data(contentsOf: url) else { return nil }
         return (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
     }()
+    /// 使用内存映射读取 PNG 原始数据构造 UIImage，避免解码到本进程脏内存，并保留 PNG 底层数据供 XPC 直接编码。
     private static func frame(_ index: Int) -> UIImage? {
-        guard let url = Bundle.main.url(forResource: String(format: "p3r-%04d", index), withExtension: "png"),
-              let image = UIImage(contentsOfFile: url.path), let cgImage = image.cgImage else { return nil }
-        let scale = (frameManifest?["scale"] as? Double) ?? 2
-        return UIImage(cgImage: cgImage, scale: scale, orientation: .up)
+        autoreleasepool {
+            guard let url = Bundle.main.url(forResource: String(format: "p3r-%04d", index), withExtension: "png"),
+                  let data = try? Data(contentsOf: url, options: .mappedIfSafe) else { return nil }
+            let scale = (frameManifest?["scale"] as? Double) ?? 2
+            return UIImage(data: data, scale: scale)
+        }
     }
-    private static let initialImage: UIImage? = {
-        guard let url = Bundle.main.url(forResource: "poster-retina", withExtension: "png"),
-              let raw = UIImage(contentsOfFile: url.path), let cgImage = raw.cgImage else { return frame(0) }
-        return UIImage(cgImage: cgImage, scale: 2, orientation: .up)
-    }()
-    private static let animation: UIImage? = {
-        if let json = frameManifest,
-           let count = json["frameCount"] as? Int,
-           let duration = json["duration"] as? Double {
-            let frames = (0..<count).compactMap { frame($0) }
-            guard frames.count == count else { return nil }
+    private static func loadInitialImage() -> UIImage? {
+        autoreleasepool {
+            guard let url = Bundle.main.url(forResource: "poster-retina", withExtension: "png"),
+                  let data = try? Data(contentsOf: url, options: .mappedIfSafe),
+                  let img = UIImage(data: data, scale: 2) else { return frame(0) }
+            return img
+        }
+    }
+    /// 按需构建动画帧并在交接后立即释放，不在常驻静态变量里长期持有 80 帧对象。
+    private static func buildAnimation() -> UIImage? {
+        autoreleasepool {
+            guard let json = frameManifest,
+                  let count = json["frameCount"] as? Int,
+                  let duration = json["duration"] as? Double else { return nil }
+            let strideStep = HandoffHealth.lowMemoryMode ? 2 : 1
+            let indices = Array(stride(from: 0, to: count, by: strideStep))
+            let frames = indices.compactMap { frame($0) }
+            guard frames.count == indices.count else { return nil }
             return UIImage.animatedImage(with: frames, duration: duration)
         }
-        return nil
-    }()
+    }
 
     private func template(_ family: CLKComplicationFamily, initial: Bool = false) -> CLKComplicationTemplate? {
-        let selectedImage = initial ? Self.initialImage : Self.animation
+        let selectedImage = initial ? Self.loadInitialImage() : Self.buildAnimation()
         guard let image = selectedImage else { return nil }
         let provider = CLKFullColorImageProvider(fullColorImage: image)
         // 非公开字段：仅用于个人研究，禁止默认缩放压平动画帧。
@@ -163,21 +182,33 @@ final class AnimatedComplication: NSObject, CLKComplicationDataSource {
                 handler(nil)
                 return
             }
-            guard date < animationReadyDate, let value = template(complication.family) else {
+            guard date < animationReadyDate else {
+                handler(nil)
+                return
+            }
+            let entry: CLKComplicationTimelineEntry? = autoreleasepool {
+                guard let value = template(complication.family) else { return nil }
+                return CLKComplicationTimelineEntry(date: animationReadyDate, complicationTemplate: value)
+            }
+            guard let entry else {
                 handler(nil)
                 return
             }
             logger.notice("提供高清动画未来条目")
-            handler([CLKComplicationTimelineEntry(date: animationReadyDate, complicationTemplate: value)])
+            handler([entry])
             HandoffHealth.animationDelivered()
             return
         }
         let end = Date().addingTimeInterval(24 * 3600)
         var next = GlassClock.nextMinute(after: date)
         var entries: [CLKComplicationTimelineEntry] = []
-        // 每张时间图约 1 MB（288×868 像素），一次只排 15 分钟；系统会在用完前再来要。
+        // 每张时间图渲染后已压为 ~8 KB 的 PNG 数据（272×592 像素），一次排 15 分钟。
         while entries.count < min(limit, 15), next <= end {
-            if let template = GlassClock.template(at: next) { entries.append(CLKComplicationTimelineEntry(date: next, complicationTemplate: template)) }
+            autoreleasepool {
+                if let template = GlassClock.template(at: next) {
+                    entries.append(CLKComplicationTimelineEntry(date: next, complicationTemplate: template))
+                }
+            }
             next = GlassClock.nextMinute(after: next)
         }
         logger.notice("提供右下时间未来条目：\(entries.count)")
