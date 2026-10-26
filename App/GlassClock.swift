@@ -19,8 +19,8 @@ enum GlassClock {
     /// 图左上角在屏幕上的位置
     private static let origin = CGPoint(x: slotCenter.x - imageSize.width / 2, y: slotCenter.y - imageSize.height / 2)
 
-    // 版式（Ultra 2 49mm 205×251 屏幕点）：时分 56 号、日期星期 26 号，首行中心 y=101，右缘 x=200（距右缘 5 点）。
-    private static let big: CGFloat = 56, small: CGFloat = 26, top: CGFloat = 101, right: CGFloat = 200
+    // 版式（Ultra 2 49mm 205×251 屏幕点）：时分 54 号、日期星期 25 号，首行中心 y=101，右缘 x=196（计入斜体与旋转外扩后距右缘约 4 点）。
+    private static let big: CGFloat = 54, small: CGFloat = 25, top: CGFloat = 101, right: CGFloat = 196
     private static let overlap: CGFloat = 0.55      // 时、分中心间距 = big × overlap，小于字高所以压叠
     private static let skewDeg: CGFloat = 16
     private static let cyan = UIColor(red: 0x8B / 255.0, green: 0xE8 / 255.0, blue: 0xF5 / 255.0, alpha: 0.82)
@@ -69,7 +69,7 @@ enum GlassClock {
                       top + big * overlap + big * 0.38 + small * 1.67]
             // 文字、字体、字号、倾角、字距、右缘内缩
             let rows: [(String, UIFont, CGFloat, CGFloat, CGFloat, CGFloat)] = [
-                (hm[0], bigFont, big, 10, 0, 2), (hm[1], bigFont, big, -8, 0, 0),
+                (hm[0], bigFont, big, 10, 0, 2), (hm[1], bigFont, big, -8, 0, 4),
                 (dateFormatter.string(from: date), smallFont, small, 8, 0.5, 3),
                 (weekdayFormatter.string(from: date).uppercased(), smallFont, small, -7, 1.0, 10)]
             for (i, (text, font, size, deg, kern, inset)) in rows.enumerated() {
